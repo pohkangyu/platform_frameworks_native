@@ -1425,13 +1425,20 @@ void SurfaceFlinger::run() {
 }
 
 nsecs_t SurfaceFlinger::getVsyncPeriod() const {
-    const auto displayId = getInternalDisplayIdLocked();
-    if (!displayId || !getHwComposer().isConnected(*displayId)) {
-        return 0;
-    }
 
-    const auto config = getHwComposer().getActiveConfig(*displayId);
-    return config ? config->getVsyncPeriod() : 0;
+    /////////////////////////////////////
+
+
+    //const auto displayId = getInternalDisplayIdLocked();
+    //if (!displayId || !getHwComposer().isConnected(*displayId)) {
+        //return 0;
+    //}
+
+    //const auto config = getHwComposer().getActiveConfig(*displayId);
+    //return config ? config->getVsyncPeriod() : 0;
+
+    ///////////////////////////
+    return 16666666;
 }
 
 void SurfaceFlinger::onVsyncReceived(int32_t sequenceId, hwc2_display_t hwcDisplayId,
@@ -1983,13 +1990,21 @@ void SurfaceFlinger::setCompositorTimingSnapped(const DisplayStatInfo& stats,
                                                 nsecs_t compositeToPresentLatency) {
     // Integer division and modulo round toward 0 not -inf, so we need to
     // treat negative and positive offsets differently.
-    nsecs_t idealLatency = (mPhaseOffsets->getCurrentSfOffset() > 0)
-            ? (stats.vsyncPeriod - (mPhaseOffsets->getCurrentSfOffset() % stats.vsyncPeriod))
-            : ((-mPhaseOffsets->getCurrentSfOffset()) % stats.vsyncPeriod);
 
+
+    //or can be stats.vsyncPeriod?
+    auto vsyncPeriod = 16666666;
+
+    nsecs_t idealLatency = (mPhaseOffsets->getCurrentSfOffset() > 0)
+            //? (stats.vsyncPeriod - (mPhaseOffsets->getCurrentSfOffset() % stats.vsyncPeriod))
+            //: ((-mPhaseOffsets->getCurrentSfOffset()) % stats.vsyncPeriod);
+            ? (vsyncPeriod - (mPhaseOffsets->getCurrentSfOffset() % vsyncPeriod))
+            : ((-mPhaseOffsets->getCurrentSfOffset()) % vsyncPeriod);
     // Just in case mPhaseOffsets->getCurrentSfOffset() == -vsyncInterval.
     if (idealLatency <= 0) {
-        idealLatency = stats.vsyncPeriod;
+        //idealLatency = stats.vsyncPeriod;
+        idealLatency = vsyncPeriod;
+
     }
 
     // Snap the latency to a value that removes scheduling jitter from the
@@ -1998,14 +2013,24 @@ void SurfaceFlinger::setCompositorTimingSnapped(const DisplayStatInfo& stats,
     // something (such as user input) to an accurate diasplay time.
     // Snapping also allows an app to precisely calculate mPhaseOffsets->getCurrentSfOffset()
     // with (presentLatency % interval).
-    nsecs_t bias = stats.vsyncPeriod / 2;
-    int64_t extraVsyncs = (compositeToPresentLatency - idealLatency + bias) / stats.vsyncPeriod;
+
+    //nsecs_t bias = stats.vsyncPeriod / 2;
+    //int64_t extraVsyncs = (compositeToPresentLatency - idealLatency + bias) / stats.vsyncPeriod;
+
+    nsecs_t bias = vsyncPeriod / 2;
+    int64_t extraVsyncs = (compositeToPresentLatency - idealLatency + bias) / vsyncPeriod;
+
     nsecs_t snappedCompositeToPresentLatency =
-            (extraVsyncs > 0) ? idealLatency + (extraVsyncs * stats.vsyncPeriod) : idealLatency;
+            //(extraVsyncs > 0) ? idealLatency + (extraVsyncs * stats.vsyncPeriod) : idealLatency;
+            (extraVsyncs > 0) ? idealLatency + (extraVsyncs * vsyncPeriod) : idealLatency;
+
+
 
     std::lock_guard<std::mutex> lock(getBE().mCompositorTimingLock);
     getBE().mCompositorTiming.deadline = stats.vsyncTime - idealLatency;
-    getBE().mCompositorTiming.interval = stats.vsyncPeriod;
+    //getBE().mCompositorTiming.interval = stats.vsyncPeriod;
+    getBE().mCompositorTiming.interval = vsyncPeriod;
+
     getBE().mCompositorTiming.presentLatency = snappedCompositeToPresentLatency;
 }
 
@@ -2110,7 +2135,10 @@ void SurfaceFlinger::postComposition()
         mHasPoweredOff = false;
     } else {
         nsecs_t elapsedTime = currentTime - getBE().mLastSwapTime;
-        size_t numPeriods = static_cast<size_t>(elapsedTime / stats.vsyncPeriod);
+        //size_t numPeriods = static_cast<size_t>(elapsedTime / stats.vsyncPeriod);
+
+        size_t numPeriods = static_cast<size_t>(elapsedTime / 16666666 /*stats.vsyncPeriod*/);
+
         if (numPeriods < SurfaceFlingerBE::NUM_BUCKETS - 1) {
             getBE().mFrameBuckets[numPeriods] += elapsedTime;
         } else {

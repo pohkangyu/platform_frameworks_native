@@ -302,48 +302,53 @@ status_t InstalldNativeService::dump(int fd, const Vector<String16> & /* args */
  * if the label of that top-level file actually changed.  This can save us
  * significant time by avoiding no-op traversals of large filesystem trees.
  */
-static int restorecon_app_data_lazy(const std::string& path, const std::string& seInfo, uid_t uid,
-        bool existing) {
+static int restorecon_app_data_lazy(const std::string& path __unused,
+                                    const std::string& seInfo __unused, uid_t uid __unused,
+                                    bool existing __unused) {
     int res = 0;
-    char* before = nullptr;
-    char* after = nullptr;
+
+    ///////////////////////////////////////////
+    //char* before = nullptr;
+    //char* after = nullptr;
 
     // Note that SELINUX_ANDROID_RESTORECON_DATADATA flag is set by
     // libselinux. Not needed here.
 
-    if (lgetfilecon(path.c_str(), &before) < 0) {
-        PLOG(ERROR) << "Failed before getfilecon for " << path;
-        goto fail;
-    }
-    if (selinux_android_restorecon_pkgdir(path.c_str(), seInfo.c_str(), uid, 0) < 0) {
-        PLOG(ERROR) << "Failed top-level restorecon for " << path;
-        goto fail;
-    }
-    if (lgetfilecon(path.c_str(), &after) < 0) {
-        PLOG(ERROR) << "Failed after getfilecon for " << path;
-        goto fail;
-    }
+    //if (lgetfilecon(path.c_str(), &before) < 0) {
+    //    PLOG(ERROR) << "Failed before getfilecon for " << path;
+    //    goto fail;
+    //}
+    //if (selinux_android_restorecon_pkgdir(path.c_str(), seInfo.c_str(), uid, 0) < 0) {
+    //    PLOG(ERROR) << "Failed top-level restorecon for " << path;
+    //    goto fail;
+    //}
+    //if (lgetfilecon(path.c_str(), &after) < 0) {
+    //    PLOG(ERROR) << "Failed after getfilecon for " << path;
+    //    goto fail;
+    //}
 
     // If the initial top-level restorecon above changed the label, then go
     // back and restorecon everything recursively
-    if (strcmp(before, after)) {
-        if (existing) {
-            LOG(DEBUG) << "Detected label change from " << before << " to " << after << " at "
-                    << path << "; running recursive restorecon";
-        }
-        if (selinux_android_restorecon_pkgdir(path.c_str(), seInfo.c_str(), uid,
-                SELINUX_ANDROID_RESTORECON_RECURSE) < 0) {
-            PLOG(ERROR) << "Failed recursive restorecon for " << path;
-            goto fail;
-        }
-    }
+//    if (strcmp(before, after)) {
+//        if (existing) {
+//            LOG(DEBUG) << "Detected label change from " << before << " to " << after << " at "
+//                    << path << "; running recursive restorecon";
+//        }
+//        if (selinux_android_restorecon_pkgdir(path.c_str(), seInfo.c_str(), uid,
+//                SELINUX_ANDROID_RESTORECON_RECURSE) < 0) {
+//            PLOG(ERROR) << "Failed recursive restorecon for " << path;
+//            goto fail;
+//        }
+//    }
+//
+//    goto done;
+//fail:
+//    res = -1;
+//done:
+//    free(before);
+//    free(after);
 
-    goto done;
-fail:
-    res = -1;
-done:
-    free(before);
-    free(after);
+    ////////////////////////////////////
     return res;
 }
 

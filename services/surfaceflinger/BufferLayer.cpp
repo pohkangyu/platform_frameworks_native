@@ -52,6 +52,7 @@
 #include "DisplayDevice.h"
 #include "LayerRejecter.h"
 #include "TimeStats/TimeStats.h"
+#include <android-base/properties.h>
 
 namespace android {
 
@@ -267,6 +268,9 @@ void BufferLayer::setPerFrameData(const sp<const DisplayDevice>& displayDevice,
     LOG_FATAL_IF(!outputLayer || !outputLayer->getState().hwc);
 
     auto& hwcLayer = (*outputLayer->getState().hwc).hwcLayer;
+
+    android::base::SetProperty("anbox.layer_name", mName.string());
+
     auto error = hwcLayer->setVisibleRegion(visible);
     if (error != HWC2::Error::None) {
         ALOGE("[%s] Failed to set visible region: %s (%d)", mName.string(),
